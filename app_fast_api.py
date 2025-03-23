@@ -12,6 +12,8 @@ from utility.documents import (
 )
 from utility.auth import register_user, verify_otp, login_user, get_current_user
 from utility.view import fetch_all_documents  # Import the new function
+from utility.logs import fetch_logs, add_log_to_db, fetch_all_logs, ActivityLog  # Import logs functions and model
+from utility.comments import add_comment  # Import add_comment function
 from typing import List
 
 app = FastAPI()
@@ -91,6 +93,39 @@ async def login_user_endpoint(
     db: Session = Depends(get_db)
 ):
     return login_user(db, email, password)
+
+# ✅ Fetch User Logs Endpoint
+@app.get("/logs/user/{user_id}", response_model=List[ActivityLog])
+async def get_user_logs(user_id: int, db: Session = Depends(get_db)):
+    try:
+        logs = fetch_logs(db, user_id)
+        if not logs:
+            raise HTTPException(status_code=404, detail=f"No logs found for user ID {user_id}")
+        return logs
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+# ✅ Add Log Endpoint
+@app.post("/logs/user/{user_id}")
+async def add_log(user_id: int, log: ActivityLog, db: Session = Depends(get_db)):
+    return add_log_to_db(db, user_id, log)
+
+# ✅ Fetch All Logs Endpoint
+@app.get("/logs/all")
+async def get_all_logs(db: Session = Depends(get_db)):
+    return {"logs": fetch_all_logs(db)}
+
+# ✅ Add Comment Endpoint
+@app.post("/comments")
+async def add_comment_endpoint(
+    document_id: str,
+    user_email: str,
+    comment_text: str,
+    db: Session = Depends(get_db)
+):
+    return add_comment(db, document_id, user_email, comment_text)
 
 # ✅ Run using:
 # uvicorn app_fast_api:app --reload
