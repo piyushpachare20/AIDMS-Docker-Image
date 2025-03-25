@@ -1,5 +1,13 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, File, UploadFile, HTTPException, Form, Depends
+from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from utility.qna import router as qna_router
+from utility.translate_text import router as translate_router
+from utility.extract_text import router as extract_router
+from utility.summarize_text import router as summarize_router
+from utility.extract_images import router as images_router
+from utility.transliteration import router as transliteration_router
 from helpers.database import get_db
 from utility.search import search_documents
 from utility.documents import (
@@ -16,7 +24,24 @@ from utility.logs import fetch_logs, add_log_to_db, fetch_all_logs, ActivityLog 
 from utility.comments import add_comment  # Import add_comment function
 from typing import List, Literal
 
-app = FastAPI()
+app = FastAPI(title="AI Document Processor and Management API")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include all routers from main.py
+app.include_router(qna_router, prefix="/api", tags=["QnA"])
+app.include_router(translate_router, prefix="/api", tags=["Translation"])
+app.include_router(extract_router, prefix="/api", tags=["Text Extraction"])
+app.include_router(summarize_router, prefix="/api", tags=["Summarization"])
+app.include_router(images_router, prefix="/api", tags=["Image Extraction"])
+app.include_router(transliteration_router, prefix="/api", tags=["Transliteration"])
 
 # ✅ Search API
 @app.get("/documents/search")
@@ -127,5 +152,11 @@ async def add_comment_endpoint(
 ):
     return add_comment(db, document_id, user_email, comment_text)
 
-# ✅ Run using:
+
+
+# ✅ Run the app
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
 # uvicorn app_fast_api:app --reload

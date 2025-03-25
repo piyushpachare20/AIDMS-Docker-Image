@@ -1,4 +1,4 @@
-DATABASE_URL = "mysql+pymysql://root:Oneserver%401234@localhost/document_db"
+DATABASE_URL = "mysql+pymysql://root:Pass%40123@localhost/document_db"
 SECRET_KEY = "your_secret_key"
 ALGORITHM = "HS256"
 SENDER_EMAIL = "patilatharva1214@gmail.com"
