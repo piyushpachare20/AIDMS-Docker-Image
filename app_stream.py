@@ -463,8 +463,9 @@ def add_log_ui():
     # Display the fetched user_id in the UI
     st.text_input("User ID", value=user_id, disabled=True)  # Read-only field for debugging
 
-    # Input field for activity
-    activity = st.text_input("Enter Activity")
+    # Input fields for action and document ID
+    action = st.text_input("Enter Action (e.g., upload, delete, etc.)")
+    document_id = st.text_input("Enter Document ID (if applicable)")
 
     # Automatically generate the current timestamp
     current_timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -474,7 +475,8 @@ def add_log_ui():
         try:
             headers = {"Authorization": f"Bearer {st.session_state.auth_token}"}
             data = {
-                "activity": activity,
+                "action": action,  # Include the action field
+                "document_id": document_id,  # Include the document_id field
                 "timestamp": current_timestamp  # Use the auto-filled timestamp
             }
             response = requests.post(f"{BASE_URL}/logs/user/{user_id}", json=data, headers=headers)

@@ -14,7 +14,7 @@ from utility.auth import register_user, verify_otp, login_user, get_current_user
 from utility.view import fetch_all_documents  # Import the new function
 from utility.logs import fetch_logs, add_log_to_db, fetch_all_logs, ActivityLog  # Import logs functions and model
 from utility.comments import add_comment  # Import add_comment function
-from typing import List
+from typing import List, Literal
 
 app = FastAPI()
 
@@ -71,7 +71,7 @@ async def register_user_endpoint(
     username: str = Form(...),
     email: str = Form(...),
     password: str = Form(...),
-    role: str = Form(...),
+    role: Literal["editor", "viewer", "admin"] = Form(...),  # Restrict role to specific values
     db: Session = Depends(get_db)
 ):
     return register_user(db, username, email, password, role)
