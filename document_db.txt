@@ -1,0 +1,136 @@
+CREATE DATABASE document_db;
+USE document_db;
+
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    role VARCHAR(255) NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    verified TINYINT DEFAULT 0
+);
+
+-- Create the documents table
+CREATE TABLE documents (
+    document_id VARCHAR(36) PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    file_path VARCHAR(255) NOT NULL,
+    uploaded_by INT,
+    FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Create the tags table
+CREATE TABLE tags (
+    tag_id INT AUTO_INCREMENT PRIMARY KEY,
+    tag_name VARCHAR(255) NOT NULL UNIQUE
+);
+
+-- Create the document_tags table to associate documents with tags
+CREATE TABLE document_tags (
+    document_id VARCHAR(36),
+    tag_id INT,
+    PRIMARY KEY (document_id, tag_id),
+    FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
+    FOREIGN KEY (tag_id) REFERENCES tags(tag_id) ON DELETE CASCADE
+);
+
+-- Create the permissions table
+CREATE TABLE permissions (
+    permission_id INT AUTO_INCREMENT PRIMARY KEY,
+    document_id VARCHAR(36),
+    user_email VARCHAR(255) NOT NULL,
+    FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE
+);
+
+ALTER TABLE documents
+ADD COLUMN last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
+
+
+
+CREATE TABLE activity_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    action VARCHAR(255) NOT NULL,
+    document_id VARCHAR(36),
+    timestamp DATETIME NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE SET NULL
+);
+
+-- Create the comments table
+CREATE TABLE comments (
+    comment_id INT AUTO_INCREMENT PRIMARY KEY,
+    document_id VARCHAR(36) NOT NULL,
+    user_email VARCHAR(255) NOT NULL,
+    comment_text TEXT NOT NULL,
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
+);
+
+select * from comments;
+select * from activity_logs;
+SELECT * FROM users;
+select * from tags;
+SELECT * FROM documents;	
+select * from document_tags;
+show tables;
+
+#triggers for activity logs
+
+# trigger for delete--------------------------------------------------------------------------------------------------------------------------------------------
+DELIMITER $$
+
+CREATE TRIGGER log_document_deletion
+BEFORE DELETE ON documents
+FOR EACH ROW
+BEGIN
+    INSERT INTO activity_logs (user_id, action, document_id, timestamp)
+    VALUES (OLD.uploaded_by, 'Deleted document', OLD.document_id, NOW());
+END$$
+
+DELIMITER ;
+# trigger for upload-----------------------------------------------------------------------------------------------------------
+
+DELIMITER $$
+
+CREATE TRIGGER log_document_insert
+AFTER INSERT ON documents
+FOR EACH ROW
+BEGIN
+    INSERT INTO activity_logs (user_id, action, document_id, timestamp)
+    VALUES (NEW.uploaded_by, 'Uploaded document', NEW.document_id, NOW());
+END$$
+
+DELIMITER ;
+#trigger for edit metadata------------------------------------------------------------------------------------------------------------------------------------------
+DELIMITER $$
+
+CREATE TRIGGER log_document_update
+BEFORE UPDATE ON documents
+FOR EACH ROW
+BEGIN
+    IF OLD.title <> NEW.title OR OLD.file_path <> NEW.file_path THEN
+        INSERT INTO activity_logs (user_id, action, document_id, timestamp)
+        VALUES (OLD.uploaded_by, 'Updated document metadata', OLD.document_id, NOW());
+    END IF;
+END$$
+
+DELIMITER ;
+
+#trigger for add comment------------------------------------------------------------------------------------------------------------------------------------------
+
+DELIMITER $$
+
+CREATE TRIGGER log_comment_insert
+AFTER INSERT ON comments
+FOR EACH ROW
+BEGIN
+    INSERT INTO activity_logs (user_id, action, document_id, timestamp)
+    VALUES ((SELECT id FROM users WHERE email = NEW.user_email), 'Added comment', NEW.document_id, NOW());
+END$$
+
+DELIMITER ;
+
+SHOW TRIGGERS;
