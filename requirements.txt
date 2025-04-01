@@ -15,8 +15,4 @@ pyjwt==2.8.0
 smtplib==0.1.1
 email-validator==1.3.1
 
-<<<<<<< HEAD
-# Install using this command: pip install -r requirements.txt
-=======
-# Install using this command: pip install -r requirements.txt
->>>>>>> 37f894c (updated read me file)
+
