@@ -47,6 +47,10 @@ ALTER TABLE documents
 ADD COLUMN last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP;
 
 
+insert into users values (5, 'test', 'adityasandhyatayade@gmail.com', 'test1234', 'admin', '123456', 1);
+DELETE from users where id = 1;
+SELECT * FROM documents;
+
 
 CREATE TABLE activity_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -68,14 +72,15 @@ CREATE TABLE comments (
     FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
     FOREIGN KEY (user_email) REFERENCES users(email) ON DELETE CASCADE
 );
-
+delete from users where id = 3 or id = 6 or id = 7;
 select * from comments;
 select * from activity_logs;
 SELECT * FROM users;
 select * from tags;
 SELECT * FROM documents;	
 select * from document_tags;
-show tables;
+
+UPDATE users SET role = 'admin' WHERE email = 'gupta1803yashi@gmail.com';
 
 #triggers for activity logs
 
@@ -134,3 +139,20 @@ END$$
 DELIMITER ;
 
 SHOW TRIGGERS;
+
+ ALTER TABLE users 
+MODIFY COLUMN role VARCHAR(255) NOT NULL DEFAULT 'user';
+
+CREATE TABLE otp_verification (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    otp VARCHAR(6) NOT NULL,
+    verified BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+alter table users 
+drop column otp ;
+select * from users;
+select * from otp_verification ;
+alter table users 
+drop column verified;

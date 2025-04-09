@@ -1,6 +1,6 @@
 from fastapi import HTTPException, UploadFile, File
 from fastapi.responses import FileResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 import os
 import shutil
@@ -11,9 +11,21 @@ from sqlalchemy import text  # Import text for raw SQL queries
 from helpers.database import get_db
 
 class DocumentMetadata(BaseModel):
-    title: Optional[str] = None
-    tags: Optional[List[str]] = None
-    permissions: Optional[List[str]] = None
+    title: Optional[str] = Field(None, description="Title of the document")
+    tags: Optional[List[str]] = Field(None, description="Tags associated with the document")
+    permissions: Optional[List[str]] = Field(None, description="Permissions for the document")
+
+    @field_validator("tags", mode="before")
+    def validate_tags(cls, value):
+        if value and not isinstance(value, list):
+            raise ValueError("Tags must be a list of strings")
+        return value
+
+    @field_validator("permissions", mode="before")
+    def validate_permissions(cls, value):
+        if value and not isinstance(value, list):
+            raise ValueError("Permissions must be a list of strings")
+        return value
 
 def upload_document(file: UploadFile, title: str, tags: List[str], permissions: List[str], uploaded_by: int, db: Session):
     cursor = db.execute(text("SELECT id FROM users WHERE id = :uploaded_by"), {"uploaded_by": uploaded_by})
